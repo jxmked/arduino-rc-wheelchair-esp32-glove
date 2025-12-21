@@ -7,4 +7,6 @@
 #define LED_CONNECTED_PIN 3
 #define LED_ERROR_PIN 2
 
+#define SAMPLING_INTERVAL_MS 100 // Instead of sample every loop, do it every ms
+
 #endif // CONSTANTS_H
