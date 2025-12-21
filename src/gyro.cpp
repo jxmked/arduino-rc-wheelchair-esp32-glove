@@ -18,10 +18,6 @@ Gyro::Gyro()
 void Gyro::begin() {
   mpu.initialize();
 
-  pinMode(LED_ERROR_PIN, OUTPUT);
-
-  digitalWrite(LED_ERROR_PIN, HIGH);
-
   while (!mpu.testConnection()) {
     Serial.println("MPU6050 connection failed");
     Serial.println("Retrying to connect to MPU6050...");
@@ -29,8 +25,6 @@ void Gyro::begin() {
   }
 
   Serial.println("MPU6050 connection successful");
-
-  digitalWrite(LED_ERROR_PIN, LOW);
 }
 
 void Gyro::loop() {
@@ -42,9 +36,12 @@ void Gyro::loop() {
   axis.y += ay;
   axis.z += az;
 
+  digitalWrite(LED_RED_PIN, LOW);
+
   __sample_take++;
 
   if (__interval.marked()) {
+    digitalWrite(LED_RED_PIN, HIGH);
     x = static_cast<float>(axis.x) / static_cast<float>(__sample_take);
     y = static_cast<float>(axis.y) / static_cast<float>(__sample_take);
     z = static_cast<float>(axis.z) / static_cast<float>(__sample_take);

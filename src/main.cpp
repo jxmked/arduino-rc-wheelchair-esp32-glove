@@ -1,8 +1,8 @@
 #include <Arduino.h>
-// #include <BLE2902.h>
-// #include <BLEDevice.h>
-// #include <BLEServer.h>
-// #include <BLEUtils.h>
+#include <BLE2902.h>
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEUtils.h>
 
 #include "TimeInterval.h"
 #include "constants.h"
@@ -10,29 +10,89 @@
 
 Gyro gyro;
 
-TimeInterval update_hz(20, 0, true);
+TimeInterval update_hz(30, 0, true);
+
+BLECharacteristic* ble_chartic;
 
 bool is_connected = false;
 
+class ServerCallback : public BLEServerCallbacks {
+  void onConnect(BLEServer* ble_server) {
+    is_connected = true;
+
+    Serial.println("Server Connected");
+  };
+
+  void onDisconnect(BLEServer* ble_server) {
+    is_connected = false;
+
+    Serial.println("Client Disconnected");
+
+    ble_server->getAdvertising()->start();
+    Serial.println("Bluetooth advertised");
+  }
+};
+
 void setup() {
   Wire.begin();
+
+  pinMode(LED_RED_PIN, OUTPUT);
+  pinMode(LED_GREEN_PIN, OUTPUT);
+
+  // Turn Red Light On To notify
+  digitalWrite(LED_RED_PIN, HIGH);
 
   Serial.begin(115200);
 
   while (!Serial);
 
+  Serial.println("Glove is booting...");
+  Serial.println("Connecting to client...");
+
+  BLEDevice::init("esp32-glove-server");
+
+  BLEServer* ble_server = BLEDevice::createServer();
+  ble_server->setCallbacks(new ServerCallback());
+
+  BLEService* ble_service = ble_server->createService(SERVICE_UUID);
+
+  ble_chartic = ble_service->createCharacteristic(
+      CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ |
+                               BLECharacteristic::PROPERTY_WRITE |
+                               BLECharacteristic::PROPERTY_NOTIFY);
+
+  ble_chartic->addDescriptor(new BLE2902());
+
+  ble_service->start();
+
+  BLEAdvertising* ble_advertz = BLEDevice::getAdvertising();
+
+  ble_advertz->addServiceUUID(SERVICE_UUID);
+  ble_advertz->setScanResponse(true);
+  ble_advertz->setMinPreferred(0x06);
+  ble_advertz->setMinPreferred(0x12);
+
+  BLEDevice::startAdvertising();
+
+  Serial.println("Waiting for client connection...");
+
   gyro.begin();
 
-  is_connected = true;
+  digitalWrite(LED_RED_PIN, LOW);
+  digitalWrite(LED_GREEN_PIN, HIGH);
 }
 
 void loop() {
   gyro.loop();
 
   if (!is_connected) {
-    // Attempt to connect
-    return;
+    digitalWrite(LED_GREEN_PIN, LOW);
+    digitalWrite(LED_RED_PIN, HIGH);
+    return;  // Attempt to connect
   }
+
+  digitalWrite(LED_RED_PIN, LOW);
+  digitalWrite(LED_GREEN_PIN, HIGH);
 
   if (!update_hz.marked()) return;
 
@@ -72,34 +132,13 @@ void loop() {
   last_command = command;
 
   Serial.println(command, BIN);
+
+  // Make sure we remain connected before sending anything
+  if (!is_connected) return;
+
   // Send Command
+  ble_chartic->setValue(&command, 1);
+  ble_chartic->notify();
 
-  // Serial.print("BX : BY | ");
-  // Serial.print(bx);
-  // Serial.print(" : ");
-  // Serial.println(by);
-
-  // String command = "";
-
-  // if (ay > 15000)
-  //   command = "FORWARD";
-  // else if (ay < -15000)
-  //   command = "REVERSE";
-  // else if (ax > 15000)
-  //   command = "RIGHT";
-  // else if (ax < -15000)
-  //   command = "LEFT";
-  // else
-  //   command = "STOP";
-
-  // if (deviceConnected && millis() - lastSend > debounceTime) {
-  //   lastSend = millis();
-  //   pCharacteristic->setValue(command.c_str());
-  //   pCharacteristic->notify();
-
-  //   // LED stays ON while connected, but we can blink it when sending
-  //   digitalWrite(LED_PIN, HIGH);
-  //   Serial.println("\033[32mSent: " + command +
-  //                  "\033[0m");  // green text in Serial Monitor
-  // }
+  digitalWrite(LED_GREEN_PIN, LOW);
 }
