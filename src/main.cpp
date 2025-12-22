@@ -128,7 +128,7 @@ void loop() {
   }
 
   // Only send the new command. :)
-  if (last_command == command) return;
+  // if (last_command == command) return;
   last_command = command;
 
   Serial.println(command, BIN);
