@@ -34,6 +34,7 @@ class ServerCallback : public BLEServerCallbacks {
 };
 
 void setup() {
+  Serial.begin(115200);
   Wire.begin();
 
   pinMode(LED_RED_PIN, OUTPUT);
@@ -41,8 +42,6 @@ void setup() {
 
   // Turn Red Light On To notify
   digitalWrite(LED_RED_PIN, HIGH);
-
-  Serial.begin(115200);
 
   while (!Serial);
 
@@ -83,6 +82,8 @@ void setup() {
 }
 
 void loop() {
+  // Keep this running to generate
+  // atleast accurate value
   gyro.loop();
 
   if (!is_connected) {
@@ -99,9 +100,6 @@ void loop() {
   const float x = gyro.x;
   const float y = gyro.y;
 
-  // Prevent sending the same command over and over again
-  static uint8_t last_command = 0x0;
-
   uint8_t command = 0x0;  // We're only using 4-bit bitwise here. ;)
 
   // Serial.print("X : Y : Z | ");
@@ -111,27 +109,28 @@ void loop() {
   // Serial.print(" : ");
   // Serial.println(gyro.z);
 
-  if (x >= 6500.0) {          // Left
-    command |= 0x8;           // 1000
-  } else if (x <= -4200.0) {  /// Right
-    command |= 0x4;           // 0100
-  } else {                    // Center
-    command &= ~0xC;          // 1100
+  if (x >= 12500.0) {          // Left
+    command |= 0x8;            // 1000
+  } else if (x <= -10000.0) {  /// Right
+    command |= 0x4;            // 0100
+  } else {                     // Center
+    command &= ~0xC;           // 1100
   }
 
-  if (y >= 4100.0) {          // Forward
-    command |= 0x1;           // 0001
-  } else if (y <= -4600.0) {  // Reverse
-    command |= 0x2;           // 0010
-  } else {                    // Center
-    command &= ~0x3;          // 0011
+  if (y >= 10000.0) {          // Forward
+    command |= 0x1;            // 0001
+  } else if (y <= -10500.0) {  // Reverse
+    command |= 0x2;            // 0010
+  } else {                     // Center
+    command &= ~0x3;           // 0011
   }
 
-  // Only send the new command. :)
-  // if (last_command == command) return;
-  last_command = command;
-
-  Serial.println(command, BIN);
+  Serial.print("cmd|x|y: ");
+  Serial.print(command, BIN);
+  Serial.print("|");
+  Serial.print(x);
+  Serial.print("|");
+  Serial.println(y);
 
   // Make sure we remain connected before sending anything
   if (!is_connected) return;
