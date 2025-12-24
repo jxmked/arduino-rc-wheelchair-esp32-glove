@@ -1,10 +1,12 @@
 # arduino-rc-wheelchair-esp32-glove
 
-> This is the reposity to remote the [Wheelchair](https://github.com/jxmked/arduino-rc-wheelchair-esp32)
+> This project will be compiled and push to the ESP32 C3 Super Mini using Arduino IDE by the client.
+> That is the reason why all files remain in the ./src folder
+
+> This is the repository to remote the [Wheelchair](https://github.com/jxmked/arduino-rc-wheelchair-esp32). Salamuch 💖
 
 ## How to use? 
 1. Just turn it on. :)
-  
 
 # Modules & Hardwares
  - ESP32 C3 Super Mini
@@ -22,7 +24,7 @@
 | 2 | Digital | LED RED + | Output |
 | 3 | Digital | LED GREEN + | Output |
 | 8 | SDA | MPU-6050 (SDA) | Data |
-| 9 | SCL | MPU-6050 (SCL) | Data |
+| 9 | SCL | MPU-6050 (SCL) | Clock |
 
 # Circuit Diagram
 
