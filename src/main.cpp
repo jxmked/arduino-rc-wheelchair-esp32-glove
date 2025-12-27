@@ -48,7 +48,7 @@ void setup() {
   Serial.println("Glove is booting...");
   Serial.println("Connecting to client...");
 
-  BLEDevice::init("esp32-glove-server");
+  BLEDevice::init(BLE_HOST_NAME);
 
   BLEServer* ble_server = BLEDevice::createServer();
   ble_server->setCallbacks(new ServerCallback());
@@ -70,6 +70,8 @@ void setup() {
   ble_advertz->setScanResponse(true);
   ble_advertz->setMinPreferred(0x06);
   ble_advertz->setMinPreferred(0x12);
+
+  ble_server->getAdvertising()->start();
 
   BLEDevice::startAdvertising();
 
