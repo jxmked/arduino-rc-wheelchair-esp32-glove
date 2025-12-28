@@ -43,12 +43,14 @@ void setup() {
   // Turn Red Light On To notify
   digitalWrite(LED_RED_PIN, HIGH);
 
-  while (!Serial);
+
+  while (!Serial)
+    ;
 
   Serial.println("Glove is booting...");
   Serial.println("Connecting to client...");
 
-  BLEDevice::init(BLE_HOST_NAME);
+  BLEDevice::init("esp32-glove-server");
 
   BLEServer* ble_server = BLEDevice::createServer();
   ble_server->setCallbacks(new ServerCallback());
@@ -56,9 +58,7 @@ void setup() {
   BLEService* ble_service = ble_server->createService(SERVICE_UUID);
 
   ble_chartic = ble_service->createCharacteristic(
-      CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ |
-                               BLECharacteristic::PROPERTY_WRITE |
-                               BLECharacteristic::PROPERTY_NOTIFY);
+    CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY);
 
   ble_chartic->addDescriptor(new BLE2902());
 
@@ -70,8 +70,6 @@ void setup() {
   ble_advertz->setScanResponse(true);
   ble_advertz->setMinPreferred(0x06);
   ble_advertz->setMinPreferred(0x12);
-
-  ble_server->getAdvertising()->start();
 
   BLEDevice::startAdvertising();
 
@@ -87,6 +85,7 @@ void loop() {
   // Keep this running to generate
   // atleast accurate value
   gyro.loop();
+
 
   if (!is_connected) {
     digitalWrite(LED_GREEN_PIN, LOW);
